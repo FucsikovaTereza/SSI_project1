@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from numpy.linalg import norm
 from math import floor
 import numpy.matlib
-
+np.seterr(divide='ignore', invalid='ignore') # ignore errors
 ###   setting variables   ###
 
 # dimensions of the corridor and travelators
@@ -15,7 +15,7 @@ travelators_y = 65
 
 
 # pedestrians setting
-N = 5                                                  # number of pedestrians
+N = 20                                                  # number of pedestrians
 xini = np.zeros([N,2])                                 # initial position
 xini[:,0] = np.random.randint(corridor_x, size = N)
 xini[:,1] = np.random.randint(corridor_y/2, size = N)
@@ -164,14 +164,14 @@ def F(x, v):
         f3now[np.isnan(f3now)] = 0
         f3[i, :] = sum(f3now, 1)
     
-    f = f + f2 #+ f3
+    f = f + f2 - f3
     Fint = f2
     Fenv = f3
     
     return f, Fmot, Fint, Fenv
 
 
-###   initialisation   ###
+###   initialization   ###
 
 tmax = 70
 h = 0.1                        # diskretisation step
@@ -188,8 +188,9 @@ U0 = 55                        # force of interaction between agents [N]
 U0w = 50
 lamb = 0
 epsilon = travelators_x/2      # distance from the exit [m]
-Yi = np.zeros((N))
-
+#Yi = np.zeros((N))
+i_T1 = []
+i_T2 = []
 
 
 ###   simulation   ###
@@ -201,61 +202,59 @@ i = 0
 xini_T = np.zeros((N, 2))
 v_T = 3 * np.ones((N, 1))
 
-while len(active_T) > 0:
-    
-    
-    if len(active_cor) != 0: 
-        # calling forces
-        Ftot, Fmot, Fint, Fenv = F(X[:, :, i], V[:, :, i])
+for k in range(10):
+    while len(active_T) > 0:
         
-        # Euler
-        X[active_cor, :, i+1] = X[active_cor, :, i] + h * V[active_cor, :, i]
-        V[active_cor, :, i+1] = V[active_cor, :, i] + h * Ftot[active_cor]
-    
+        if len(active_cor) != 0: 
+            # calling forces
+            Ftot, Fmot, Fint, Fenv = F(X[:, :, i], V[:, :, i])
+            
+            # Euler
+            X[active_cor, :, i+1] = X[active_cor, :, i] + h * V[active_cor, :, i]
+            V[active_cor, :, i+1] = V[active_cor, :, i] + h * Ftot[active_cor]
         
-        for j in active_cor:
-            print(j, norm(X[j, :, i] - xA[j]))
-            if norm(X[j, :, i] - xA[j]) < epsilon:
-                xini_T[j,:] = X[j, :, i]
-                active_cor.remove(j)
-                print("na travelatoru:", j, X[j, :, i],)
-    
-    if xini_T != np.array([]):
-
-        for j in active_T:
-            if X[j, 1, i] != np.nan:
-                print(j, "y:",  X[j,1,i])
-                if xini_T[j, 0] > corridor_x/2:
-                    X[j, 0, i+1] = X[j, 0, i]
-                    X[j, 1, i+1] = X[j, 1, i] + h * v_T[j]
-                    V[j, 1, i+1] = V[j, 1, i]
-                    
-                elif xini_T[j,0] > 1 and xini_T[j,0] < corridor_x/2:
-                    X[j, 0, i+1] = X[j, 0, i]
-                    X[j, 1, i+1] = X[j, 1, i] + h * (v_T[j] + v0[j])
-                    V[j, 1, i+1] = V[j, 1, i]
-                        
+            
+            for j in active_cor:
+                # print(j, norm(X[j, :, i] - xA[j]))
+                if norm(X[j, :, i] - xA[j]) < epsilon:
+                    xini_T[j,:] = X[j, :, i]
+                    active_cor.remove(j)
+                    print("na travelatoru:", j, X[j, :, i],)
+        
+        if len(active_cor) < N:
+                # finished?
+            for j in active_T:
                 if X[j, 1, i] >= end_y:
                     active_T.remove(j)
                     print("odstranen:", j, X[j, :, i])
-                    Yi[j] = i
-                    X[j, :, i+1:nmax+1] = np.nan
-                   
-    # plot
-    plot_environment(P, m, n, X[active_T, :, i])
-                
-    i += 1
+                    if xini_T[j, 0] > corridor_x/2:
+                        i_T1.append(i)
+                    elif xini_T[j,0] > 1 and xini_T[j,0] < corridor_x/2:
+                        i_T2.append(i)
+        
+            for j in active_T:
+                # print(j, "y:",  X[j,1,i])
+                if xini_T[j, 0] > corridor_x/2:  # if in a slow travelator
+                    X[j, 0, i+1] = X[j, 0, i]
+                    X[j, 1, i+1] = X[j, 1, i] + h * v_T[j]
+                    V[j, 1, i+1] = V[j, 1, i]
+                        
+                elif xini_T[j,0] > 1 and xini_T[j,0] < corridor_x/2:  # fast travelator
+                    X[j, 0, i+1] = X[j, 0, i]
+                    X[j, 1, i+1] = X[j, 1, i] + h * (v_T[j] + v0[j])
+                    V[j, 1, i+1] = V[j, 1, i]
+                      
+    
+                       
+        # plot
+        plot_environment(P, m, n, X[active_T, :, i])
+                    
+        i += 1
+    
 
 #X = np.save('X.npy', X)
 
 ###   Statistics for specific model   ###
-
-#tensor of positions from the first to the last step on the travelators
-#X_T = X[:,:,int(min(i_T[:,0])):int(max(i_T[:,1]))]
-#xA_i = xA[:,0]
-#xA_i[xA_i == 20] = 1
-#xA_i[xA_i == 40] = 2
-#x_TA = np.hstack((X_T, xA_i))
 
 #X = np.load('X.npy', X)
 
@@ -270,5 +269,3 @@ while len(active_T) > 0:
 #plt.legend()
 #plt.savefig("rychlejsi.pdf", format="pdf")
 #plt.show()
-
-
