@@ -10,15 +10,10 @@ travelators_x = 10
 travelators_y = 65 
     
     
-# pedestrians setting
-N = 20                                                  # number of pedestrians
-xini = np.zeros([N,2])                                 # initial position
-xini[:,0] = np.random.randint(corridor_x, size = N)
-xini[:,1] = np.random.randint(corridor_y/2, size = N)
-vini = 0 * xini 
+N = 10                                                  # number of pedestrians
     
 # plot setting                                       # initial speed
-P = [corridor_x, corridor_x/3, corridor_x*2/3, corridor_y, travelators_x, travelators_x/2, travelators_y, corridor_x/2]   # possible values for plot
+P = [corridor_x, corridor_x/3, corridor_x*2/3, corridor_y, travelators_x, travelators_x/2, travelators_y, corridor_x/2, corridor_y/2]   # possible values for plot
 Points = np.array([[(0, 0), (0, P[3])], 
                  [(P[0], P[0]), (0, P[3])], 
                  [(0, P[1]-P[5]), (P[3], P[3])], 
@@ -31,6 +26,10 @@ Points = np.array([[(0, 0), (0, P[3])],
                  ])
 m, n = zip(*Points)
 
+
+# choose the way to find an atractor; 0 is for choosing closer atractor, 1 for random selection, 2 choose amount of peds
+faster_peds = 3
+choice = 2
 
 #SFM variables
     
