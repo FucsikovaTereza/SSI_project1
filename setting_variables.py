@@ -10,7 +10,7 @@ travelators_x = 10
 travelators_y = 65 
     
     
-N = 10                                                  # number of pedestrians
+N = 50                                                  # number of pedestrians
     
 # plot setting                                       # initial speed
 P = [corridor_x, corridor_x/3, corridor_x*2/3, corridor_y, travelators_x, travelators_x/2, travelators_y, corridor_x/2, corridor_y/2]   # possible values for plot
@@ -28,19 +28,19 @@ m, n = zip(*Points)
 
 
 # choose the way to find an atractor; 0 is for choosing closer atractor, 1 for random selection, 2 choose amount of peds
-faster_peds = 3
+faster_peds = 40
 choice = 2
 
 #SFM variables
     
-tmax = 70
+tmax = 80
 h = 0.1                        # diskretisation step
 nmax = floor(tmax/h)
 v0 = 2 * np.ones((N, 1))       # optimal velocity [m/s]
-xi = 1.1                       # reach of pedestrians [m] 
-xw = 0.9
+xi = 1.5                       # reach of pedestrians [m] 
+xw = 1.5
 tau = 0.1                      # reaction time [s]
-U0 = 55                        # force of interaction between agents [N]
-U0w = 50
+U0 = 50                       # force of interaction between agents [N]
+U0w = 55
 lamb = 0
 epsilon = travelators_x/2      # distance from the exit [m]

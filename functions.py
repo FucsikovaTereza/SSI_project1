@@ -3,6 +3,7 @@ from numpy.linalg import norm
 import random
 from setting_variables import *
 from plot_functions import plot_environment
+import csv
 
 
 
@@ -159,7 +160,7 @@ def F_all(x, v, xini, vini, r):
 
 ###   simulation   ###
 
-def run_simulation(i_T1, i_T2, print_stats = True, plot_env = True):
+def run_simulation(i_last, i_T1, i_T2, print_stats = True, plot_env = True, same_speed = False):
     global N, P, nmax, h, epsilon, choice, faster_peds
     
     xini = np.zeros([N,2])                                 # initial position
@@ -172,7 +173,9 @@ def run_simulation(i_T1, i_T2, print_stats = True, plot_env = True):
     elif choice == 1:
         r, xA = random_atractor_navigation(xini)
     elif choice == 2:
+        xini = xini[xini[:, 0].argsort()]
         r, xA = navigate_concrete_amount_of_peds(xini, faster_peds)
+
     
     X = np.zeros((N, 2, nmax+1))
     V = np.zeros((N, 2, nmax+1))
@@ -186,7 +189,8 @@ def run_simulation(i_T1, i_T2, print_stats = True, plot_env = True):
     v_T = 3 * np.ones((N, 1))
     
     for k in range(10):
-        while len(active_T) > 0:    
+        while len(active_T) > 0: 
+
             if len(active_cor) != 0: 
                 # calling forces
                 Ftot, Fmot, Fint, Fenv = F_all(X[:, :, i], V[:, :, i], xini, vini, r)
@@ -203,8 +207,11 @@ def run_simulation(i_T1, i_T2, print_stats = True, plot_env = True):
                             print("na travelatoru:", j, X[j, :, i],)
             if len(active_cor) < N:
                     # finished?
+                    
                 for j in active_T:
                     if X[j, 1, i] >= end_y:
+                        if len(active_T) == 1:
+                            i_last.append(i)
                         active_T.remove(j)
                         if print_stats == True:
                             print("odstranen:", j, X[j, :, i])
@@ -222,11 +229,49 @@ def run_simulation(i_T1, i_T2, print_stats = True, plot_env = True):
                             
                     elif xini_T[j,0] > 1 and xini_T[j,0] < P[7]:  # fast travelator
                         X[j, 0, i+1] = X[j, 0, i]
-                        X[j, 1, i+1] = X[j, 1, i] + h * (v_T[j] + v0[j])
+                        if same_speed == False:
+                            X[j, 1, i+1] = X[j, 1, i] + h * (v_T[j] + v0[j])
+                        else:
+                            X[j, 1, i+1] = X[j, 1, i] + h * v_T[j]
                         V[j, 1, i+1] = V[j, 1, i]
+
+                
             # plot
             if plot_env == True:
                 plot_environment(X[active_T, :, i])
                             
             i += 1
     return X, V
+
+
+def load_data(file_name):
+    i_T1_val = []
+    i_T2_val = []
+    i_last_val = []
+                    
+    for i in range(1, 1001): 
+        filename = f'{file_name}\{file_name}_{i}.csv'
+        
+        with open(filename, 'r') as file:
+            reader = csv.reader(file)
+            
+            # assuming the CSV has a header row, you can skip it using next(reader)
+            next(reader)
+            
+            # read the values from the columns into lists, skipping empty cells
+            for row in reader:
+                if len(row) == 3:  
+                    if row[0].strip(): 
+                        i_T1_val.append(float(row[0]))
+                    
+                    if row[1].strip():  
+                        i_T2_val.append(float(row[1]))
+                    
+                    if row[2].strip(): 
+                        i_last_val.append(float(row[2]))
+    
+    i_T1_arr = np.array(i_T1_val)
+    i_T2_arr = np.array(i_T2_val)
+    i_last_arr = np.array(i_last_val)
+    
+    return i_T1_arr, i_T2_arr, i_last_arr

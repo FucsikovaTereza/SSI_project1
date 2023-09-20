@@ -1,6 +1,6 @@
 ###   plot   ###
 import matplotlib.pyplot as plt
-from numpy import arange
+import numpy as np
 from setting_variables import P, m, n
     
 def plot_environment(X, file_path = False):
@@ -47,15 +47,33 @@ def plot_3ped(X, i_T1, i_T2, file_path = False):
     plt.show()
 
 
-def hist(i_T1, i_T2, file_path = False):
-    plt.hist(i_T2, alpha=0.7, label='travelátor 1', rwidth=0.8, color = 'green')
-    plt.hist(i_T1, alpha=0.8, label='travelátor 2', rwidth=0.8, color = 'orange')
+def hist(i_T1, i_T2, file_path = None):
+    bin_width = 8
+    plt.hist(i_T2, bins=np.arange(min(i_T2), max(i_T2) + bin_width, bin_width), alpha=0.7, label='travelátor 1', rwidth=0.85, color = 'green', )
+    plt.hist(i_T1, bins=np.arange(min(i_T1), max(i_T1) + bin_width, bin_width), alpha=0.8, label='travelátor 2', rwidth=0.85, color = 'orange')
     
     plt.xlabel("čas v systému")
     plt.ylabel("počet agentů")
-    #plt.yticks(arange(451, step=50))
     plt.legend()
     
-    if file_path == True:
+    if file_path is not None:
         plt.savefig(file_path, format="pdf")
     plt.show()
+
+    
+
+def box(i_T1, i_T2, file_path = None):
+    data = [i_T2, i_T1]
+    plt.boxplot(data)
+    if file_path is not None:
+        plt.savefig(file_path, format="pdf")
+    plt.show()
+    
+
+def plot_all(i_T1, i_T2, histograms = False, boxplots = False):
+    if histograms == True:
+        hist(i_T1, i_T2)
+    if boxplots == True:
+        box(i_T1, i_T2)
+    
+    
